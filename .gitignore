@@ -1,0 +1,11 @@
+# 真实配置：可能含 API Key / Cookie，永不收录；只分享 config.example.json
+config.json
+**/config.json
+
+# 运行产物 / 系统垃圾
+*.log
+*.pid
+.DS_Store
+__pycache__/
+.venv/
+node_modules/
