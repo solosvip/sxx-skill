@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>技能配置</title>
+    <style>
+      :root {
+        --accent: #5b5bd6;
+        --accent-light: #ededfc;
+        --accent-hover: #4a4ac0;
+        --bg: #f4f4f6;
+        --sidebar-bg: #ffffff;
+        --panel-bg: #ffffff;
+        --text: #111118;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --danger: #dc2626;
+        --ok: #16a34a;
+        --warn: #d97706;
+        --input-bg: #f9fafb;
+        --radius: 8px;
+        --sidebar-width: 260px;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+      }
+
+      /* ─── 侧边栏 ─── */
+      .sidebar {
+        width: var(--sidebar-width);
+        min-width: var(--sidebar-width);
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .sidebar-header {
+        padding: 20px 16px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sidebar-title {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        color: var(--text);
+        margin-bottom: 10px;
+      }
+
+      .search-wrap {
+        position: relative;
+      }
+
+      .search-wrap svg {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+      }
+
+      #searchInput {
+        width: 100%;
+        padding: 7px 10px 7px 30px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--input-bg);
+        font-size: 13px;
+        color: var(--text);
+        outline: none;
+      }
+
+      #searchInput:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91,91,214,0.12);
+      }
+
+      .skill-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 8px;
+      }
+
+      .skill-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        user-select: none;
+        transition: background 80ms;
+      }
+
+      .skill-item:hover { background: var(--bg); }
+
+      .skill-item.active {
+        background: var(--accent-light);
+      }
+
+      .skill-item.active .skill-item-name {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .skill-item.unconfigured .skill-item-name {
+        color: var(--muted);
+      }
+
+      .skill-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--border);
+      }
+
+      .skill-dot.ok { background: var(--ok); }
+      .skill-dot.warn { background: var(--warn); }
+
+      .skill-item-info { flex: 1; min-width: 0; }
+
+      .skill-item-name {
+        font-size: 13px;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .skill-group-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        padding: 12px 10px 4px;
+        user-select: none;
+      }
+
+      .skill-group-label:first-child { padding-top: 4px; }
+
+      .sidebar-footer {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      /* ─── 主面板 ─── */
+      .panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 28px 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel-bg);
+        flex-shrink: 0;
+      }
+
+      .panel-title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+
+      .panel-subtitle {
+        margin-top: 3px;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .panel-meta {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .tag.ok { color: var(--ok); border-color: #bbf7d0; background: #f0fdf4; }
+      .tag.warn { color: var(--warn); border-color: #fde68a; background: #fffbeb; }
+
+      .panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 28px 40px;
+        background: var(--bg);
+      }
+
+      /* ─── 表单字段 ─── */
+      .fields { display: flex; flex-direction: column; gap: 1px; }
+
+      .field {
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: 0;
+        padding: 14px 18px;
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 12px 20px;
+        align-items: start;
+      }
+
+      .field:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+      .field:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+      .field:only-child { border-radius: var(--radius); }
+      .field + .field { border-top: none; }
+
+      .field-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        padding-top: 9px;
+      }
+
+      .req { color: var(--danger); margin-left: 3px; }
+
+      .field-desc {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+        font-weight: 400;
+      }
+
+      .field-control { display: flex; flex-direction: column; gap: 6px; }
+
+      .control-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="number"],
+      select,
+      textarea {
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--input-bg);
+        font-size: 13px;
+        color: var(--text);
+        outline: none;
+        transition: border-color 80ms, box-shadow 80ms;
+      }
+
+      input[type="text"]:focus,
+      input[type="password"]:focus,
+      input[type="number"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91,91,214,0.12);
+        background: #fff;
+      }
+
+      .field-input { width: 100%; max-width: 480px; }
+
+      input[type="number"].field-input { max-width: 160px; }
+
+      textarea.field-input { min-height: 80px; resize: vertical; font-family: ui-monospace, monospace; font-size: 12px; }
+
+      /* toggle switch */
+      .toggle-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        user-select: none;
+        padding: 8px 0;
+      }
+
+      .toggle-track {
+        position: relative;
+        width: 36px;
+        height: 20px;
+        border-radius: 999px;
+        background: var(--border);
+        transition: background 150ms;
+        flex-shrink: 0;
+      }
+
+      .toggle-thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        transition: transform 150ms;
+      }
+
+      input[type="checkbox"].toggle-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      input[type="checkbox"].toggle-input:checked + .toggle-track {
+        background: var(--accent);
+      }
+
+      input[type="checkbox"].toggle-input:checked + .toggle-track .toggle-thumb {
+        transform: translateX(16px);
+      }
+
+      .toggle-label { font-size: 13px; color: var(--muted); }
+
+      /* secret indicator */
+      .secret-status {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: var(--radius);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+
+      .secret-status.ok { color: var(--ok); border-color: #bbf7d0; background: #f0fdf4; }
+      .secret-status.pending { color: var(--accent); border-color: #c7d2fe; background: #eef2ff; }
+      .secret-status.clearing { color: var(--warn); border-color: #fde68a; background: #fffbeb; }
+
+      /* ─── 按钮 ─── */
+      button {
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 7px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 80ms, opacity 80ms;
+        user-select: none;
+        white-space: nowrap;
+      }
+
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+      .btn-secondary {
+        background: var(--panel-bg);
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .btn-secondary:hover:not(:disabled) { background: var(--bg); }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--muted);
+        border-color: transparent;
+        padding: 7px 10px;
+      }
+      .btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+
+      .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+      /* ─── 底部操作栏 ─── */
+      .panel-actions {
+        padding: 14px 28px;
+        border-top: 1px solid var(--border);
+        background: var(--panel-bg);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .action-msg {
+        font-size: 13px;
+        color: var(--muted);
+        flex: 1;
+      }
+
+      .action-msg.error { color: var(--danger); }
+      .action-msg.ok { color: var(--ok); }
+
+      /* ─── 空态 / 加载 ─── */
+      .placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--muted);
+        gap: 10px;
+        text-align: center;
+        padding: 40px;
+      }
+
+      .placeholder-icon { font-size: 36px; opacity: 0.4; }
+      .placeholder-text { font-size: 14px; }
+
+      /* ─── 目录选择弹窗 ─── */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+      }
+
+      .modal-overlay.show { display: flex; }
+
+      .modal {
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        width: min(600px, 100%);
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .modal-head {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      .modal-head-title { font-size: 15px; font-weight: 600; }
+      .modal-head-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .dir-roots {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .dir-crumb {
+        font-size: 12px;
+        padding: 5px 10px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dirlist {
+        flex: 1;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        min-height: 180px;
+        max-height: 280px;
+        overflow-y: auto;
+      }
+
+      .diritem {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 60ms;
+      }
+
+      .diritem:last-child { border-bottom: none; }
+      .diritem:hover { background: var(--bg); }
+
+      .diritem-icon { color: var(--muted); font-size: 14px; }
+
+      .modal-foot {
+        padding: 12px 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .modal-foot-msg { flex: 1; font-size: 12px; color: var(--muted); }
+      .modal-foot-msg.error { color: var(--danger); }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+        background: var(--bg);
+        padding: 2px 5px;
+        border-radius: 4px;
+        color: var(--accent);
+      }
+
+      .section-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 6px;
+        margin-top: 20px;
+      }
+
+      .section-label:first-child { margin-top: 0; }
+
+      @media (max-width: 700px) {
+        body { flex-direction: column; }
+        .sidebar { width: 100%; min-width: unset; height: 200px; border-right: none; border-bottom: 1px solid var(--border); }
+        .field { grid-template-columns: 1fr; }
+        .field-input { max-width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">技能配置</div>
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="9" r="6"/><path d="M15 15l3 3"/>
+          </svg>
+          <input id="searchInput" type="search" placeholder="搜索技能…" autocomplete="off" />
+        </div>
+      </div>
+      <div class="skill-list" id="skillList">
+        <div class="placeholder"><div class="placeholder-text">加载中…</div></div>
+      </div>
+      <div class="sidebar-footer">
+        <span id="skillCount" style="color:var(--muted)"></span>
+        <button class="btn-ghost btn-sm" id="refreshBtn" type="button">刷新</button>
+      </div>
+    </aside>
+
+    <!-- 主面板 -->
+    <main class="panel">
+      <div id="panelHeader" class="panel-header" style="display:none">
+        <div class="panel-title" id="panelTitle"></div>
+        <div class="panel-subtitle" id="panelSubtitle"></div>
+        <div class="panel-meta" id="panelMeta"></div>
+      </div>
+
+      <div class="panel-body" id="panelBody">
+        <div class="placeholder">
+          <div class="placeholder-icon">⚙</div>
+          <div class="placeholder-text">从左侧选择一个技能来配置</div>
+        </div>
+      </div>
+
+      <div id="panelActions" class="panel-actions" style="display:none">
+        <button class="btn-primary" id="saveBtn" type="button">保存</button>
+        <button class="btn-secondary" id="reloadBtn" type="button">重新加载</button>
+        <span class="action-msg" id="actionMsg"></span>
+      </div>
+    </main>
+
+    <!-- 目录选择弹窗 -->
+    <div class="modal-overlay" id="dirModal">
+      <div class="modal">
+        <div class="modal-head">
+          <div>
+            <div class="modal-head-title" id="dirModalTitle">选择目录</div>
+            <div class="modal-head-sub" id="dirModalSub"></div>
+          </div>
+          <button class="btn-ghost" id="dirModalClose" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="dir-roots" id="dirRoots"></div>
+          <div class="dir-crumb" id="dirCrumb">
+            <button class="btn-ghost btn-sm" id="dirUpBtn" type="button" style="padding:2px 6px;">↑ 上一级</button>
+            <span id="dirDisplay" style="font-size:12px;color:var(--muted)"></span>
+          </div>
+          <div class="dirlist" id="dirList"></div>
+        </div>
+        <div class="modal-foot">
+          <span class="modal-foot-msg" id="dirMsg"></span>
+          <button class="btn-primary btn-sm" id="dirChooseBtn" type="button">选择此目录</button>
+          <button class="btn-secondary btn-sm" id="dirCancelBtn" type="button">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ─── 状态 ───────────────────────────────────────────────────────────────
+      const state = {
+        skills: [],
+        selected: "",
+        configs: new Map(),  // name -> { loading, error, data, config, fields, secretEdits, saving, message }
+        dirPicker: {
+          open: false, skill: "", fieldPath: "", fieldLabel: "",
+          roots: [], root: "", rel: "", display: "", dirs: [],
+        },
+      };
+
+      // ─── DOM 引用 ────────────────────────────────────────────────────────────
+      const skillListEl = document.getElementById("skillList");
+      const skillCountEl = document.getElementById("skillCount");
+      const searchEl = document.getElementById("searchInput");
+      const refreshBtn = document.getElementById("refreshBtn");
+
+      const panelHeaderEl = document.getElementById("panelHeader");
+      const panelTitleEl = document.getElementById("panelTitle");
+      const panelSubtitleEl = document.getElementById("panelSubtitle");
+      const panelMetaEl = document.getElementById("panelMeta");
+      const panelBodyEl = document.getElementById("panelBody");
+      const panelActionsEl = document.getElementById("panelActions");
+      const saveBtnEl = document.getElementById("saveBtn");
+      const reloadBtnEl = document.getElementById("reloadBtn");
+      const actionMsgEl = document.getElementById("actionMsg");
+
+      const dirModalEl = document.getElementById("dirModal");
+      const dirModalTitleEl = document.getElementById("dirModalTitle");
+      const dirModalSubEl = document.getElementById("dirModalSub");
+      const dirModalCloseEl = document.getElementById("dirModalClose");
+      const dirRootsEl = document.getElementById("dirRoots");
+      const dirCrumbEl = document.getElementById("dirCrumb");
+      const dirUpBtnEl = document.getElementById("dirUpBtn");
+      const dirDisplayEl = document.getElementById("dirDisplay");
+      const dirListEl = document.getElementById("dirList");
+      const dirMsgEl = document.getElementById("dirMsg");
+      const dirChooseBtnEl = document.getElementById("dirChooseBtn");
+      const dirCancelBtnEl = document.getElementById("dirCancelBtn");
+
+      // ─── 工具 ────────────────────────────────────────────────────────────────
+      function esc(s) {
+        return String(s || "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+      }
+
+      async function fetchJson(url, options) {
+        const res = await fetch(url, options);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "请求失败");
+        return data;
+      }
+
+      function getByPath(obj, path) {
+        const parts = String(path || "").split(".").filter(Boolean);
+        let cur = obj;
+        for (const p of parts) {
+          if (!cur || typeof cur !== "object") return undefined;
+          cur = cur[p];
+        }
+        return cur;
+      }
+
+      function setByPath(obj, path, value) {
+        const parts = String(path || "").split(".").filter(Boolean);
+        if (!parts.length) return;
+        let cur = obj;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const k = parts[i];
+          if (!cur[k] || typeof cur[k] !== "object") cur[k] = {};
+          cur = cur[k];
+        }
+        cur[parts[parts.length - 1]] = value;
+      }
+
+      function isPrimitive(v) {
+        return v === null || ["string","number","boolean"].includes(typeof v);
+      }
+
+      function inferType(path, value) {
+        if (typeof value === "boolean") return "boolean";
+        if (typeof value === "number") return "number";
+        if (path && String(path).startsWith("secrets.")) return "secret";
+        if (typeof value === "string") {
+          const p = String(path || "");
+          if (/_dir$/.test(p) || p === "output_dir" || p === "input_dir") return "directory";
+          return "string";
+        }
+        return "string";
+      }
+
+      function buildFields(config) {
+        const ui = (config && typeof config.__ui === "object" && config.__ui) ? config.__ui : {};
+        const uiFields = (ui && typeof ui.fields === "object" && ui.fields) ? ui.fields : {};
+        const order = Array.isArray(ui.order) ? ui.order : [];
+        const hasUi = Object.keys(uiFields).length > 0;
+
+        let paths = [];
+        if (hasUi) {
+          const seen = new Set();
+          for (const p of order) {
+            if (!p || !uiFields[p] || seen.has(p)) continue;
+            seen.add(p); paths.push(p);
+          }
+          Object.keys(uiFields).filter(p => !seen.has(p)).sort().forEach(p => paths.push(p));
+        } else {
+          const inferred = [];
+          for (const [k, v] of Object.entries(config || {})) {
+            if (k === "__ui" || k === "settings" || k === "secrets") continue;
+            if (isPrimitive(v)) inferred.push(k);
+          }
+          const settings = (config && typeof config.settings === "object") ? config.settings : {};
+          for (const [k, v] of Object.entries(settings)) { if (isPrimitive(v)) inferred.push("settings." + k); }
+          const secrets = (config && typeof config.secrets === "object") ? config.secrets : {};
+          for (const [k, v] of Object.entries(secrets)) { if (isPrimitive(v)) inferred.push("secrets." + k); }
+          const weight = p => p === "output_dir" ? 1 : p === "input_dir" ? 2 : p.startsWith("settings.") ? 3 : p.startsWith("secrets.") ? 4 : 5;
+          inferred.sort((a, b) => weight(a) - weight(b) || a.localeCompare(b));
+          paths = inferred;
+        }
+
+        const fields = paths.map(p => {
+          const meta = (uiFields[p] && typeof uiFields[p] === "object") ? uiFields[p] : {};
+          const current = getByPath(config, p);
+          const type = meta.type || inferType(p, current);
+          return {
+            path: p,
+            label: meta.label || p,
+            type,
+            required: !!meta.required,
+            description: meta.description || "",
+            placeholder: meta.placeholder || "",
+            options: Array.isArray(meta.options) ? meta.options : null,
+          };
+        });
+
+        return { hasUi, fields };
+      }
+
+      function ensureConfigShape(config) {
+        if (!config || typeof config !== "object") return { settings: {}, secrets: {} };
+        if (!config.settings || typeof config.settings !== "object") config.settings = {};
+        if (!config.secrets || typeof config.secrets !== "object") config.secrets = {};
+        return config;
+      }
+
+      // ─── 侧边栏渲染 ──────────────────────────────────────────────────────────
+      function renderSkillList() {
+        const q = (searchEl.value || "").trim().toLowerCase();
+        const filtered = state.skills.filter(s => {
+          const hay = (s.name + " " + (s.yaml_name || "") + " " + (s.description || "")).toLowerCase();
+          return !q || hay.includes(q);
+        });
+
+        skillCountEl.textContent = filtered.length + " / " + state.skills.length + " 个技能";
+
+        if (!filtered.length) {
+          skillListEl.innerHTML = `<div class="placeholder"><div class="placeholder-text">${q ? "没有匹配的技能" : "未找到技能"}</div></div>`;
+          return;
+        }
+
+        skillListEl.innerHTML = "";
+
+        const configured = filtered.filter(s => s.has_config);
+        const unconfigured = filtered.filter(s => !s.has_config);
+
+        function appendGroup(skills, label) {
+          if (!skills.length) return;
+          const groupLabel = document.createElement("div");
+          groupLabel.className = "skill-group-label";
+          groupLabel.textContent = label;
+          skillListEl.appendChild(groupLabel);
+          for (const skill of skills) {
+            const dot = skill.has_config ? "ok" : skill.has_example ? "warn" : "";
+            const title = skill.yaml_name && skill.yaml_name !== skill.name ? skill.yaml_name : skill.name;
+            const isUnconfigured = !skill.has_config;
+            const item = document.createElement("div");
+            item.className = "skill-item" +
+              (state.selected === skill.name ? " active" : "") +
+              (isUnconfigured ? " unconfigured" : "");
+            item.dataset.skill = skill.name;
+            item.innerHTML = `
+              <div class="skill-dot ${dot}"></div>
+              <div class="skill-item-info">
+                <div class="skill-item-name">${esc(title)}</div>
+              </div>
+            `;
+            item.addEventListener("click", () => selectSkill(skill.name));
+            skillListEl.appendChild(item);
+          }
+        }
+
+        appendGroup(configured, "已配置");
+        appendGroup(unconfigured, "未配置");
+      }
+
+      // ─── 选中技能 / 主面板 ───────────────────────────────────────────────────
+      function selectSkill(name) {
+        state.selected = name;
+        renderSkillList();
+
+        const skill = state.skills.find(s => s.name === name);
+        if (!skill) return;
+
+        const title = skill.yaml_name && skill.yaml_name !== skill.name ? skill.yaml_name : skill.name;
+        panelTitleEl.textContent = title;
+        panelSubtitleEl.textContent = skill.description || "(SKILL.md 未提供描述)";
+        panelHeaderEl.style.display = "";
+        panelActionsEl.style.display = "";
+
+        const cfgState = state.configs.get(name);
+        if (!cfgState || !cfgState.data) {
+          loadSkillConfig(name, false);
+        } else {
+          renderPanel(name);
+        }
+      }
+
+      function renderPanel(skillName) {
+        const skill = state.skills.find(s => s.name === skillName);
+        const cfgState = state.configs.get(skillName);
+
+        // 更新 meta tags
+        panelMetaEl.innerHTML = "";
+        if (cfgState && cfgState.data) {
+          const d = cfgState.data;
+          const tag1 = document.createElement("span");
+          tag1.className = "tag " + (d.exists ? "ok" : "warn");
+          tag1.textContent = d.exists ? "config.json" : "config.example.json（未保存）";
+          panelMetaEl.appendChild(tag1);
+
+          if (cfgState.fields) {
+            const tag2 = document.createElement("span");
+            tag2.className = "tag";
+            tag2.textContent = cfgState.fields.hasUi ? "已定义 __ui" : "自动推断字段";
+            panelMetaEl.appendChild(tag2);
+          }
+        }
+
+        // 更新操作按钮状态
+        if (cfgState) {
+          saveBtnEl.disabled = !!cfgState.saving || !!cfgState.loading;
+          saveBtnEl.textContent = cfgState.saving ? "保存中…" : "保存";
+          reloadBtnEl.disabled = !!cfgState.saving || !!cfgState.loading;
+          if (cfgState.message) {
+            actionMsgEl.textContent = cfgState.message.text;
+            actionMsgEl.className = "action-msg " + (cfgState.message.isError ? "error" : cfgState.message.ok ? "ok" : "");
+          } else {
+            actionMsgEl.textContent = "";
+            actionMsgEl.className = "action-msg";
+          }
+        }
+
+        if (!cfgState || cfgState.loading) {
+          panelBodyEl.innerHTML = `<div class="placeholder"><div class="placeholder-text">加载配置中…</div></div>`;
+          return;
+        }
+
+        if (cfgState.error) {
+          panelBodyEl.innerHTML = `
+            <div class="placeholder">
+              <div class="placeholder-text" style="color:var(--danger)">${esc(cfgState.error)}</div>
+              <button class="btn-secondary btn-sm" id="retryBtn">重试</button>
+            </div>
+          `;
+          document.getElementById("retryBtn").addEventListener("click", () => loadSkillConfig(skillName, true));
+          return;
+        }
+
+        const config = cfgState.config;
+        const { fields } = cfgState.fields;
+
+        panelBodyEl.innerHTML = "";
+
+        if (cfgState.data && cfgState.data.note) {
+          const noteEl = document.createElement("div");
+          noteEl.style.cssText = "font-size:13px;color:var(--muted);margin-bottom:16px;padding:10px 14px;background:var(--panel-bg);border:1px solid var(--border);border-radius:var(--radius);";
+          noteEl.textContent = cfgState.data.note;
+          panelBodyEl.appendChild(noteEl);
+        }
+
+        if (!fields.length) {
+          const emptyEl = document.createElement("div");
+          emptyEl.className = "placeholder";
+          emptyEl.innerHTML = `<div class="placeholder-text">暂无可配置项。请在技能的 config.json 中添加字段并定义 __ui 元数据。</div>`;
+          panelBodyEl.appendChild(emptyEl);
+          return;
+        }
+
+        const fieldsWrap = document.createElement("div");
+        fieldsWrap.className = "fields";
+
+        for (const f of fields) {
+          if (f.type === "section") {
+            const sec = document.createElement("div");
+            sec.className = "section-label";
+            sec.textContent = f.label;
+            if (f.description) sec.title = f.description;
+            fieldsWrap.appendChild(sec);
+            continue;
+          }
+
+          const row = document.createElement("div");
+          row.className = "field";
+
+          // 左列：标签 + 描述
+          const left = document.createElement("div");
+          left.innerHTML = `
+            <div class="field-label">${esc(f.label)}${f.required ? '<span class="req">*</span>' : ""}</div>
+            ${f.description ? `<div class="field-desc">${esc(f.description)}</div>` : ""}
+          `;
+
+          // 右列：控件
+          const right = document.createElement("div");
+          right.className = "field-control";
+          const controlRow = document.createElement("div");
+          controlRow.className = "control-row";
+          const current = getByPath(config, f.path);
+
+          if (f.type === "boolean") {
+            const label = document.createElement("label");
+            label.className = "toggle-wrap";
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.className = "toggle-input";
+            input.checked = !!current;
+            input.setAttribute("data-skill", skillName);
+            input.setAttribute("data-path", f.path);
+            const track = document.createElement("div");
+            track.className = "toggle-track";
+            const thumb = document.createElement("div");
+            thumb.className = "toggle-thumb";
+            track.appendChild(thumb);
+            const span = document.createElement("span");
+            span.className = "toggle-label";
+            span.textContent = input.checked ? "开启" : "关闭";
+            input.addEventListener("change", () => {
+              setByPath(config, f.path, !!input.checked);
+              cfgState.dirty = true;
+              span.textContent = input.checked ? "开启" : "关闭";
+            });
+            label.appendChild(input);
+            label.appendChild(track);
+            label.appendChild(span);
+            controlRow.appendChild(label);
+
+          } else if (f.type === "directory") {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "field-input";
+            input.value = typeof current === "string" ? current : "";
+            input.placeholder = f.placeholder || "路径…";
+            input.setAttribute("data-skill", skillName);
+            input.setAttribute("data-path", f.path);
+            input.addEventListener("input", () => {
+              setByPath(config, f.path, input.value);
+              cfgState.dirty = true;
+            });
+            const btn = document.createElement("button");
+            btn.className = "btn-secondary btn-sm";
+            btn.type = "button";
+            btn.textContent = "选择…";
+            btn.addEventListener("click", () => chooseDirectoryViaOS(skillName, f.path, f.label, input.value, input));
+            controlRow.appendChild(input);
+            controlRow.appendChild(btn);
+
+          } else if (f.type === "number") {
+            const input = document.createElement("input");
+            input.type = "number";
+            input.className = "field-input";
+            input.value = typeof current === "number" ? String(current) : (current == null ? "" : String(current));
+            input.placeholder = f.placeholder || "";
+            input.setAttribute("data-skill", skillName);
+            input.setAttribute("data-path", f.path);
+            input.addEventListener("input", () => {
+              const v = input.value.trim();
+              setByPath(config, f.path, v === "" ? null : Number(v));
+              cfgState.dirty = true;
+            });
+            controlRow.appendChild(input);
+
+          } else if (f.type === "select") {
+            const sel = document.createElement("select");
+            sel.className = "field-input";
+            sel.setAttribute("data-skill", skillName);
+            sel.setAttribute("data-path", f.path);
+            for (const opt of (f.options || [])) {
+              const o = document.createElement("option");
+              if (opt && typeof opt === "object" && "value" in opt) {
+                o.value = String(opt.value);
+                o.textContent = String(opt.label ?? opt.value);
+              } else { o.value = o.textContent = String(opt); }
+              sel.appendChild(o);
+            }
+            sel.value = current == null ? "" : String(current);
+            sel.addEventListener("change", () => { setByPath(config, f.path, sel.value); cfgState.dirty = true; });
+            controlRow.appendChild(sel);
+
+          } else if (f.type === "textarea") {
+            const ta = document.createElement("textarea");
+            ta.className = "field-input";
+            ta.value = typeof current === "string" ? current : (current == null ? "" : String(current));
+            ta.placeholder = f.placeholder || "";
+            ta.setAttribute("data-skill", skillName);
+            ta.setAttribute("data-path", f.path);
+            ta.addEventListener("input", () => { setByPath(config, f.path, ta.value); cfgState.dirty = true; });
+            controlRow.appendChild(ta);
+
+          } else if (f.type === "secret") {
+            if (!cfgState.secretEdits) cfgState.secretEdits = {};
+            const input = document.createElement("input");
+            input.type = "password";
+            input.className = "field-input";
+            input.value = "";
+            input.placeholder = f.placeholder || "留空 = 保持不变";
+            input.setAttribute("data-skill", skillName);
+            input.setAttribute("data-path", f.path);
+
+            const indicator = document.createElement("span");
+            indicator.className = "secret-status";
+
+            const existing = getByPath(config, f.path);
+            const hasExisting = !!(typeof existing === "string" && existing.trim());
+
+            function updateIndicator() {
+              const edit = cfgState.secretEdits[f.path] || { action: "keep" };
+              if (edit.action === "set") { indicator.className = "secret-status pending"; indicator.textContent = "将更新"; }
+              else if (edit.action === "clear") { indicator.className = "secret-status clearing"; indicator.textContent = "将清空"; }
+              else { indicator.className = "secret-status" + (hasExisting ? " ok" : ""); indicator.textContent = hasExisting ? "已设置" : "未设置"; }
+            }
+
+            input.addEventListener("input", () => {
+              cfgState.secretEdits[f.path] = input.value === "" ? { action: "keep" } : { action: "set", value: input.value };
+              cfgState.dirty = true;
+              updateIndicator();
+            });
+
+            const clearBtn = document.createElement("button");
+            clearBtn.type = "button";
+            clearBtn.className = "btn-secondary btn-sm";
+            clearBtn.textContent = "清空";
+            clearBtn.addEventListener("click", () => {
+              cfgState.secretEdits[f.path] = { action: "clear" };
+              input.value = "";
+              cfgState.dirty = true;
+              updateIndicator();
+            });
+
+            updateIndicator();
+            controlRow.appendChild(input);
+            controlRow.appendChild(clearBtn);
+            controlRow.appendChild(indicator);
+
+          } else {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "field-input";
+            input.value = typeof current === "string" ? current : (current == null ? "" : String(current));
+            input.placeholder = f.placeholder || "";
+            input.setAttribute("data-skill", skillName);
+            input.setAttribute("data-path", f.path);
+            input.addEventListener("input", () => { setByPath(config, f.path, input.value); cfgState.dirty = true; });
+            controlRow.appendChild(input);
+          }
+
+          right.appendChild(controlRow);
+          row.appendChild(left);
+          row.appendChild(right);
+          fieldsWrap.appendChild(row);
+        }
+
+        panelBodyEl.appendChild(fieldsWrap);
+      }
+
+      // ─── 数据加载 ─────────────────────────────────────────────────────────────
+      async function loadSkills() {
+        skillListEl.innerHTML = `<div class="placeholder"><div class="placeholder-text">加载中…</div></div>`;
+        try {
+          const data = await fetchJson("/api/skills");
+          state.skills = data.skills || [];
+          renderSkillList();
+        } catch (e) {
+          skillListEl.innerHTML = `<div class="placeholder"><div class="placeholder-text" style="color:var(--danger)">${esc(e.message || "加载失败")}</div></div>`;
+        }
+      }
+
+      async function loadSkillConfig(skillName, force) {
+        const prev = state.configs.get(skillName) || {};
+        if (prev.loading) return;
+        if (prev.data && !force) { if (state.selected === skillName) renderPanel(skillName); return; }
+
+        const cfgState = { ...prev, loading: true, error: "", message: null, saving: false };
+        state.configs.set(skillName, cfgState);
+        if (state.selected === skillName) renderPanel(skillName);
+
+        try {
+          const data = await fetchJson("/api/config?skill=" + encodeURIComponent(skillName));
+          const config = ensureConfigShape(data.config);
+          const fields = buildFields(config);
+          state.configs.set(skillName, { ...cfgState, loading: false, error: "", data, config, fields });
+        } catch (e) {
+          state.configs.set(skillName, { ...cfgState, loading: false, error: e && e.message ? e.message : String(e) });
+        }
+
+        if (state.selected === skillName) renderPanel(skillName);
+      }
+
+      async function saveSkillConfig(skillName) {
+        const cfgState = state.configs.get(skillName);
+        if (!cfgState || cfgState.loading || cfgState.error || cfgState.saving) return;
+
+        cfgState.saving = true;
+        cfgState.message = { text: "保存中…", isError: false };
+        renderPanel(skillName);
+
+        try {
+          const configToSave = cfgState.config;
+          const edits = cfgState.secretEdits || {};
+          for (const [path, edit] of Object.entries(edits)) {
+            if (!edit || typeof edit !== "object") continue;
+            if (edit.action === "set") setByPath(configToSave, path, edit.value || "");
+            if (edit.action === "clear") setByPath(configToSave, path, "");
+          }
+
+          const missing = [];
+          for (const f of (cfgState.fields?.fields || [])) {
+            if (!f.required || f.type === "boolean") continue;
+            const v = getByPath(configToSave, f.path);
+            if (v === null || v === undefined || (typeof v === "string" && !v.trim())) missing.push(f.label || f.path);
+          }
+          if (missing.length) throw new Error("以下必填项未填写：" + missing.join("、"));
+
+          await fetchJson("/api/config?skill=" + encodeURIComponent(skillName), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(configToSave),
+          });
+
+          cfgState.dirty = false;
+          cfgState.saving = false;
+          cfgState.message = { text: "已保存", ok: true };
+          renderPanel(skillName);
+          renderSkillList(); // 更新绿点
+          setTimeout(() => {
+            if (cfgState.message && cfgState.message.ok) { cfgState.message = null; renderPanel(skillName); }
+          }, 2000);
+          await loadSkillConfig(skillName, true);
+        } catch (e) {
+          cfgState.saving = false;
+          cfgState.message = { text: "保存失败：" + (e && e.message ? e.message : String(e)), isError: true };
+          renderPanel(skillName);
+        }
+      }
+
+      // ─── 目录选择 ─────────────────────────────────────────────────────────────
+      async function chooseDirectoryViaOS(skillName, fieldPath, fieldLabel, initialValue, inputEl) {
+        const cfgState = state.configs.get(skillName);
+        if (!cfgState || !cfgState.config) return;
+        try {
+          cfgState.message = { text: "请在系统选择器中选择目录…", isError: false };
+          renderPanel(skillName);
+          const title = "为「" + skillName + "」设置：" + (fieldLabel || fieldPath);
+          const data = await fetchJson("/api/os/choose-directory?title=" + encodeURIComponent(title) + "&initial=" + encodeURIComponent(String(initialValue || "")));
+          if (data.cancelled) { cfgState.message = null; renderPanel(skillName); return; }
+          const val = String(data.path || "").trim();
+          if (!val) throw new Error("未返回目录路径");
+          setByPath(cfgState.config, fieldPath, val);
+          cfgState.dirty = true;
+          if (inputEl) inputEl.value = val;
+          cfgState.message = null;
+          renderPanel(skillName);
+        } catch (e) {
+          cfgState.message = { text: "选择器失败：" + (e && e.message ? e.message : String(e)), isError: true };
+          renderPanel(skillName);
+        }
+      }
+
+      function showDirModal(show) {
+        dirModalEl.classList.toggle("show", show);
+      }
+
+      async function openDirPicker(skillName, fieldPath, fieldLabel) {
+        state.dirPicker = { ...state.dirPicker, open: true, skill: skillName, fieldPath, fieldLabel: fieldLabel || fieldPath, rel: "", dirs: [] };
+        dirModalTitleEl.textContent = "选择目录";
+        dirModalSubEl.textContent = (fieldLabel || fieldPath) + " · " + skillName;
+        dirMsgEl.textContent = "加载中…";
+        dirMsgEl.className = "modal-foot-msg";
+        showDirModal(true);
+        try {
+          const data = await fetchJson("/api/fs/roots");
+          state.dirPicker.roots = data.roots || [];
+          state.dirPicker.root = state.dirPicker.roots.length ? state.dirPicker.roots[0].id : "";
+          renderDirRoots();
+          await loadDirList();
+          dirMsgEl.textContent = "";
+        } catch (e) {
+          dirMsgEl.textContent = "读取失败：" + (e && e.message ? e.message : String(e));
+          dirMsgEl.className = "modal-foot-msg error";
+        }
+      }
+
+      function renderDirRoots() {
+        dirRootsEl.innerHTML = "";
+        for (const r of state.dirPicker.roots) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn-secondary btn-sm";
+          btn.textContent = r.label;
+          if (r.id === state.dirPicker.root) { btn.style.borderColor = "var(--accent)"; btn.style.color = "var(--accent)"; }
+          btn.addEventListener("click", async () => {
+            state.dirPicker.root = r.id;
+            state.dirPicker.rel = "";
+            renderDirRoots();
+            await loadDirList();
+          });
+          dirRootsEl.appendChild(btn);
+        }
+      }
+
+      async function loadDirList() {
+        if (!state.dirPicker.root) return;
+        dirMsgEl.textContent = "";
+        const data = await fetchJson("/api/fs/list?root=" + encodeURIComponent(state.dirPicker.root) + "&path=" + encodeURIComponent(state.dirPicker.rel || ""));
+        state.dirPicker.display = data.display || "";
+        state.dirPicker.dirs = data.dirs || [];
+        dirDisplayEl.textContent = state.dirPicker.display || "";
+        renderDirList();
+      }
+
+      function renderDirList() {
+        dirListEl.innerHTML = "";
+        if (!state.dirPicker.dirs.length) {
+          dirListEl.innerHTML = `<div class="diritem" style="cursor:default;color:var(--muted)">（没有子目录）</div>`;
+          return;
+        }
+        for (const d of state.dirPicker.dirs) {
+          const item = document.createElement("div");
+          item.className = "diritem";
+          item.innerHTML = `<span class="diritem-icon">📁</span><span>${esc(d.name)}</span>`;
+          item.addEventListener("click", async () => { state.dirPicker.rel = d.path || ""; await loadDirList(); });
+          dirListEl.appendChild(item);
+        }
+      }
+
+      function closeDirPicker() {
+        state.dirPicker.open = false;
+        showDirModal(false);
+      }
+
+      async function chooseCurrentDir() {
+        const { skill, fieldPath, display } = state.dirPicker;
+        if (!skill || !fieldPath) return;
+        const cfgState = state.configs.get(skill);
+        if (!cfgState || !cfgState.config) return;
+        const val = String(display || "").replace(/[\\/]+$/, "");
+        setByPath(cfgState.config, fieldPath, val);
+        cfgState.dirty = true;
+        const input = document.querySelector(`input[data-skill="${skill}"][data-path="${fieldPath}"]`);
+        if (input) input.value = val;
+        closeDirPicker();
+      }
+
+      // ─── 事件绑定 ─────────────────────────────────────────────────────────────
+      refreshBtn.addEventListener("click", loadSkills);
+      searchEl.addEventListener("input", renderSkillList);
+
+      saveBtnEl.addEventListener("click", () => { if (state.selected) saveSkillConfig(state.selected); });
+      reloadBtnEl.addEventListener("click", () => { if (state.selected) loadSkillConfig(state.selected, true); });
+
+      dirModalCloseEl.addEventListener("click", closeDirPicker);
+      dirCancelBtnEl.addEventListener("click", closeDirPicker);
+      dirChooseBtnEl.addEventListener("click", chooseCurrentDir);
+      dirUpBtnEl.addEventListener("click", async () => {
+        const parts = String(state.dirPicker.rel || "").split("/").filter(Boolean);
+        parts.pop();
+        state.dirPicker.rel = parts.join("/");
+        await loadDirList();
+      });
+      dirModalEl.addEventListener("click", e => { if (e.target === dirModalEl) closeDirPicker(); });
+      document.addEventListener("keydown", e => { if (e.key === "Escape" && state.dirPicker.open) closeDirPicker(); });
+
+      // ─── 启动 ─────────────────────────────────────────────────────────────────
+      loadSkills();
+    </script>
+  </body>
+</html>
